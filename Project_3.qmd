@@ -34,6 +34,7 @@ weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ```
 
 ## Model selection for the equally sized group
+
 ```{r}
 # here we construct the null and the full model
 intercept_only <- polr(eq.group ~ 1, data=weather)
@@ -74,12 +75,9 @@ comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
                             McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw, mcf2.olog.final))
 ```
 
-
 ```{r compbw, results='asis'}
 kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model Selection Process for equally sized groups") %>% kableExtra::kable_styling(full_width = F, position="center", latex_options="HOLD_position")
 ```
-
-
 
 ```{r}
 #Parameter estimates####
@@ -148,6 +146,7 @@ sum(conf.matrix)
 (acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
 
 ```
+
 ## Visualization of Quantity of Interest
 
 ```{r}
@@ -191,4 +190,3 @@ ggplot(pred.final, aes(x = pressure)) +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
-
