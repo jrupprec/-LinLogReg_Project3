@@ -10,6 +10,7 @@ editor: visual
 ```{r}
 library(ggplot2)
 library(pscl)
+library(dplyr)
 # Necessary for ordinal regression:
 library(MASS)
 weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
@@ -22,23 +23,28 @@ weather$eq.group <- cut(weather$rain,
 weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ```
 
-
+## Model selection for the equally sized group
 ```{r}
+# here we construct the null and the full model
 intercept_only <- polr(eq.group ~ 1, data=weather)
 olog.full <- polr(eq.group ~ pressure + location + speed + temp + monthnr, data = weather)
+# n = number of observations
 n <- nrow(weather)
 
 Model.olog.Fw <- step(intercept_only, # start with the minModel instead of nullModel
                 direction = 'forward', # run forward selection
                 scope = list(upper = olog.full, # the maximum to consider is a model with all variables
                              lower = intercept_only), # the minimum to consider is a model with X10 only
-                trace = 0, k=log(n))
+               trace = 0, k=log(n))
 
 Model.olog.Bw <- step(olog.full, # start with the minModel instead of nullModel
                 direction = 'backward', # run forward selection
                 scope = list(upper = olog.full, # the maximum to consider is a model with all variables
-                             lower = intercept_only), # the minimum to consider is a model with X10 only
+                            lower = intercept_only), # the minimum to consider is a model with X10 only
                 trace = 0, k=log(n))
+
+(model.final <- step(olog.full))
+(sum.final <- summary(model.final))
 
 bic.olog.Fw <- BIC(Model.olog.Fw)
 aic.olog.Fw <- AIC(Model.olog.Fw)
@@ -49,7 +55,163 @@ bic.olog.Bw <- BIC(Model.olog.Bw)
 aic.olog.Bw <- AIC(Model.olog.Bw)
 mcf2.olog.Bw <- pR2(Model.olog.Bw)['McFadden']
 
-comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw),
-                            AIC = c(aic.olog.Fw, aic.olog.Bw),
-                            McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw))
+bic.olog.final <- BIC(model.final)
+aic.olog.final <- AIC(model.final)
+mcf2.olog.final <- pR2(model.final)['McFadden']
+
+comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
+                            AIC = c(aic.olog.Fw, aic.olog.Bw, aic.olog.final),
+                            McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw, mcf2.olog.final))
 ```
+
+
+```{r compbw, results='asis'}
+kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model Selection Process for equally sized groups") %>% kableExtra::kable_styling(full_width = F, position="center", latex_options="HOLD_position")
+```
+
+
+## Model selection for the equal width categories
+```{r}
+# here we construct the null and the full model
+model.null <- polr(group ~ 1, data=weather)
+model.full <- polr(group ~ pressure + location + speed + temp + monthnr, data = weather)
+# n = number of observations
+n <- nrow(weather)
+
+Model.olog.Fw <- step(model.null, # start with the minModel instead of nullModel
+                direction = 'forward', # run forward selection
+                scope = list(upper = model.full, # the maximum to consider is a model with all variables
+                             lower = model.null), # the minimum to consider is a model with X10 only
+               trace = 0, k=log(n))
+
+Model.olog.Bw <- step(model.full, # start with the minModel instead of nullModel
+                direction = 'backward', # run forward selection
+                scope = list(upper = model.full, # the maximum to consider is a model with all variables
+                            lower = model.null), # the minimum to consider is a model with X10 only
+                trace = 0, k=log(n))
+
+(model.final <- step(model.full))
+(sum.final <- summary(model.final))
+
+bic.olog.Fw <- BIC(Model.olog.Fw)
+aic.olog.Fw <- AIC(Model.olog.Fw)
+mcf2.olog.Fw <- pR2(Model.olog.Fw)['McFadden']
+
+
+bic.olog.Bw <- BIC(Model.olog.Bw)
+aic.olog.Bw <- AIC(Model.olog.Bw)
+mcf2.olog.Bw <- pR2(Model.olog.Bw)['McFadden']
+
+bic.olog.final <- BIC(model.final)
+aic.olog.final <- AIC(model.final)
+mcf2.olog.final <- pR2(model.final)['McFadden']
+
+comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
+                            AIC = c(aic.olog.Fw, aic.olog.Bw, aic.olog.final),
+                            McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw, mcf2.olog.final))
+comparison
+```
+
+
+```{r compbw_eqwidth, results='asis'}
+kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model Selection Process for equally sized groups") %>% kableExtra::kable_styling(full_width = F, position="center", latex_options="HOLD_position")
+```
+
+```{r}
+#Parameter estimates####
+##beta-estimates####
+cbind(beta = model.final$coefficients, 
+      expbeta = exp(model.final$coefficients),
+      exp(confint(model.final)))
+##zeta-extimates####
+cbind(zeta = model.final$zeta, 
+      expzeta = exp(model.final$zeta))
+
+## beta and zeta with s.e.####
+sum.final$coefficients
+
+#Odds####
+## Odds for unlikely, all x=0####
+exp(model.final$zeta[1])
+## Odds for unlikely, pared = 1####
+exp(model.final$zeta[1])/exp(model.final$coefficients[1])
+## Odds for unlikely, pared = 1 and gpa = 3####
+exp(model.final$zeta[1])/exp(model.final$coefficients[1] + 3*model.final$coefficients[2])
+
+#Estimate props and categories####
+##estimated probabilities####
+predict(model.final, type = "prob")
+##predicted category####
+predict(model.final)
+predict(model.final, type = "class")
+
+#Predict and ...####
+x0 <- data.frame(gpa = rep(seq(2, 4, 0.1), 2),
+                 pared = c(rep("no", length(seq(2, 4, 0.1))),
+                           rep("yes", length(seq(2, 4, 0.1)))))
+pred.final <- cbind(
+  x0,
+  predict(model.final, newdata = x0, type = "prob"),
+  yhat = predict(model.final, newdata = x0))
+
+##plot probs####
+ggplot(pred.final, aes(x = gpa)) +
+  geom_line(aes(y = unlikely, color = "1.unlikely"), linewidth = 2) +
+  geom_line(aes(y = `somewhat likely`, color = "2.somewhat likely"), linewidth = 2) +
+  geom_line(aes(y = `very likely`, color = "3.very likely"), linewidth = 2) +
+  labs(color = "apply", title = "Graduate school?") +
+  facet_wrap(~ pared, labeller = "label_both") +
+  theme(text = element_text(size = 14))
+
+##plot stacked probs####
+ggplot(pred.final, aes(x = gpa)) +
+  geom_ribbon(aes(ymin = 0, ymax = unlikely, fill = "1.unlikely")) +
+  geom_ribbon(aes(ymin = unlikely, 
+                  ymax = unlikely + `somewhat likely`, 
+                  fill = "2.somewhat likely")) +
+  geom_ribbon(aes(ymin = unlikely + `somewhat likely`, ymax = 1,
+                  fill = "3.very likely")) +
+  labs(fill = "apply", title = "Graduate school?") +
+  facet_wrap(~ pared, labeller = "label_both") +
+  theme(text = element_text(size = 14))
+
+#AIC, BIC, R2####
+## deviance####
+model.final$deviance
+## total number of parameters (beta and zeta)####
+model.final$edf
+##collect measures####
+info <- cbind(aic = AIC(model.null, model.final, model.full),
+              bic = BIC(model.null, model.final, model.full),
+              R2D = 100*c(1 - model.null$deviance/model.null$deviance, 
+                          1 - model.final$deviance/model.null$deviance, 
+                          1 - model.full$deviance/model.null$deviance),
+              R2D.adj = 100*c(1 - (model.null$deviance + model.null$edf - model.null$edf)/
+                                model.null$deviance, 
+                              1 - (model.final$deviance + model.final$edf - model.null$edf)/
+                                model.null$deviance, 
+                              1 - (model.full$deviance + model.full$edf - model.null$edf)/
+                                model.null$deviance))
+round(info, digits = 1)
+
+# LR-test comparing nested models####
+anova(model.null, model.final)
+anova(model.final, model.full)
+
+#Goodness-of-fit####
+##Confusion matrix####
+
+pred.final <- cbind(ologit,
+                    yhat = predict(model.final))
+(conf.matrix <- table(pred.final$apply, pred.final$yhat))
+table(pred.final$apply)
+table(pred.final$yhat)
+sum(conf.matrix)
+
+##Sensitivity etc####
+(sens <- 100*(diag(conf.matrix)/table(pred.final$apply)))
+(prec <- 100*(diag(conf.matrix)/table(pred.final$yhat)))
+(acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
+
+```
+
