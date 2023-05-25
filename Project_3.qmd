@@ -283,5 +283,32 @@ model.final <- step(model.null,
                      direction = "both",
                   k = log(nrow(weather)))
 
+
+
+```
+```{r}
+sum.final <- summary(model.final)
+sum.final
+
+#odds
+(beta <- sum.final$coefficients)
+(se.beta <- sum.final$standard.errors)
+(z.value <- beta/se.beta)
+(P.value <- pnorm(abs(z.value), lower.tail = FALSE))
+
+#odds ratios####
+(OR <- exp(beta))
+OR
+OR["low precipitation", ]
+OR["medium precipitation", ]
+
+## Confidence intervals for OR####
+ci <- exp(confint(model.final))
+# a 3-dimensional matrix!
+ci
+
+```
+```{r}
+
 ```
 
