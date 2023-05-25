@@ -2,8 +2,8 @@
 title: "Project 3"
 subtitle: "Ordinal and Multinomial Logistic Regression"
 author: "Vilgot Hillbom, Jens Rupprecht"
-date: "26.05.2023"
-format: pptx
+date: 2022-05-26
+format: beamer
 editor: visual
 execute:
   echo: false
@@ -20,11 +20,13 @@ library(dplyr)
 # Necessary for ordinal regression:
 library(MASS)
 library(kableExtra)
-weather <- read.csv("/Users/vilgot/Documents/Plugg/linlog/Projects R/LinLogReg_Project1/weather.csv", sep = ",", dec = ".")
-#weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
+library(nnet)
+library(stargazer)
+#weather <- read.csv("/Users/vilgot/Documents/Plugg/linlog/Projects R/LinLogReg_Project1/weather.csv", sep = ",", dec = ".")
+weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
 
-#weather[weather$location == "KatterjÃ¥kk",]$location <- "Katterjokk"
-weather[weather$location == "Katterjåkk",]$location <- "Katterjokk"
+weather[weather$location == "KatterjÃ¥kk",]$location <- "Katterjokk"
+#weather[weather$location == "Katterjåkk",]$location <- "Katterjokk"
 
 g <- 3
 weather$group <- as.character(cut(weather$rain, breaks = g))
@@ -39,12 +41,13 @@ weather$eq.group <- as.character(cut(weather$rain,
 weather$eq.group[weather$eq.group == "[0.2,39.7]"] <- "low precipitation"
 weather$eq.group[weather$eq.group == "(39.7,68.4]"] <- "medium precipitation"
 weather$eq.group[weather$eq.group == "(68.4,292]"] <- "high precipitation"
-weather$eq.group <- as.factor(weather$eq.group)
+weather$eq.group <- as.factor(factor(weather$eq.group, levels=c('low precipitation', 'medium precipitation', 'high precipitation')))
 
 weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ```
 
 ## Model selection for the equally sized group
+
 ```{r}
 # here we construct the null and the full model
 model.null <- polr(eq.group ~ 1, data=weather)
@@ -83,15 +86,18 @@ mcf2.olog.final <- pR2(model.final)['McFadden']
 comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
                             AIC = c(aic.olog.Fw, aic.olog.Bw, aic.olog.final),
                             McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw, mcf2.olog.final))
+row.names(comparison) <- c("Forward Selection", "Backward Selection", "stepwise")
 ```
-
-
-
 
 ```{r}
-kable(comparison, format = "latex") %>% kableExtra::kable_styling(full_width = F, position="center")
+kable(comparison, format = "html") %>% kableExtra::kable_styling(full_width = F, position="center")
 ```
 
+$$precipitation = pressure + monthnr + speed + location$$
+```{r}
+stargazer(model.final,type = "text")
+
+```
 
 
 ```{r}
@@ -105,28 +111,28 @@ cbind(zeta = model.final$zeta,
       expzeta = exp(model.final$zeta))
 
 ## beta and zeta with s.e.####
-sum.final$coefficients
+#sum.final$coefficients
 
 #Odds####
 ## Odds for unlikely, all x=0####
-exp(model.final$zeta[1])
+#exp(model.final$zeta[1])
 ## Odds for unlikely, pared = 1####
-exp(model.final$zeta[1])/exp(model.final$coefficients[1])
+#exp(model.final$zeta[1])/exp(model.final$coefficients[1])
 ## Odds for unlikely, pared = 1 and gpa = 3####
-exp(model.final$zeta[1])/exp(model.final$coefficients[1] + 3*model.final$coefficients[2])
+#exp(model.final$zeta[1])/exp(model.final$coefficients[1] + 3*model.final$coefficients[2])
 
 #Estimate props and categories####
 ##estimated probabilities####
-predict(model.final, type = "prob")
+#predict(model.final, type = "prob")
 ##predicted category####
-predict(model.final)
-predict(model.final, type = "class")
+#predict(model.final)
+#predict(model.final, type = "class")
 
 #AIC, BIC, R2####
 ## deviance####
-model.final$deviance
+#model.final$deviance
 ## total number of parameters (beta and zeta)####
-model.final$edf
+#model.final$edf
 ##collect measures####
 info <- cbind(aic = AIC(model.null, model.final, model.full),
               bic = BIC(model.null, model.final, model.full),
@@ -142,24 +148,24 @@ info <- cbind(aic = AIC(model.null, model.final, model.full),
 ```
 
 ```{r}
-kable(info, format = "latex") %>% kable_styling(full_width = F, position = "center")
+kable(info, format = "html") %>% kable_styling(full_width = F, position = "center")
 ```
 
-
 ## Likelihood Ratio test of null model vs final model
+
 ```{r}
 # LR-test comparing nested models####
-kable(anova(model.null, model.final), format = "latex") %>% kable_styling(full_width = F, position = "center")
+kable(anova(model.null, model.final), format = "html") %>% kable_styling(full_width = F, position = "center")
 ```
 
 ## Likelihood Ratio test of final vs. full model
+
 ```{r}
-kable(anova(model.final, model.full),  format = "latex")  %>% kable_styling(full_width = F, position = "center")
+kable(anova(model.final, model.full),  format = "html")  %>% kable_styling(full_width = F, position = "center")
 ```
 
-
-
 ## Confusion Matrix
+
 ```{r}
 #Goodness-of-fit####
 ##Confusion matrix####
@@ -178,10 +184,9 @@ pred.final <- cbind(weather,
 
 cat("This renders an overall accuracy of: ", acc, "%")
 ```
-
-
-
-
+```{r}
+kable(conf.matrix,  format = "html")  %>% kable_styling(full_width = F, position = "center")
+```
 ## Visualization of Quantity of Interest (Pressure, Location)
 
 ```{r}
@@ -206,7 +211,7 @@ pred.final <- cbind(
   yhat = predict(model.final, newdata = x0))
 
 ##plot probs####
-ggplot(pred.final, aes(x = pressure)) +
+ordered.pressure <- ggplot(pred.final, aes(x = pressure)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
@@ -216,6 +221,7 @@ ggplot(pred.final, aes(x = pressure)) +
 ```
 
 ## Stacked Visualization
+
 ```{r}
 ##plot stacked probs####
 ggplot(pred.final, aes(x = pressure)) +
@@ -229,7 +235,6 @@ ggplot(pred.final, aes(x = pressure)) +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
-
 
 ## Visualization of Quantity of Interest (Speed, Location)
 
@@ -255,7 +260,7 @@ pred.final <- cbind(
   yhat = predict(model.final, newdata = x0))
 
 ##plot probs####
-ggplot(pred.final, aes(x = speed)) +
+ordered.speed <- ggplot(pred.final, aes(x = speed)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
@@ -265,6 +270,7 @@ ggplot(pred.final, aes(x = speed)) +
 ```
 
 ## Stacked Visualization
+
 ```{r}
 ##plot stacked probs####
 ggplot(pred.final, aes(x = speed)) +
@@ -280,6 +286,7 @@ ggplot(pred.final, aes(x = speed)) +
 ```
 
 ## Multinomial
+
 ```{r}
 weather$eq.group <- relevel(weather$eq.group, ref = "low precipitation")
 
@@ -293,7 +300,7 @@ weather$eq.group <- relevel(weather$eq.group, ref = "low precipitation")
 (model.speed <- multinom(eq.group ~ speed, data = weather))
 (sum.math <- summary(model.pressure))
 
-(model.full <- multinom(eq.group ~ pressure + speed + temp + monthnr
+(model.full <- multinom(eq.group ~ pressure + speed + temp + monthnr + location
                           , data = weather))
 
 model.final <- step(model.null,
@@ -302,7 +309,6 @@ model.final <- step(model.null,
                   k = log(nrow(weather)))
 summary(model.final)
 ```
-
 
 ```{r}
 sum.final <- summary(model.final)
@@ -341,8 +347,8 @@ pred.x0 <- cbind(
 head(pred.x0)
 
 
-
-ggplot(pred.x0, aes(x = pressure)) +
+ 
+multnom.speed <- ggplot(pred.x0, aes(x = speed)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
@@ -350,6 +356,7 @@ ggplot(pred.x0, aes(x = pressure)) +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
+
 ```{r}
 x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
                  location = c(rep("Lund", length(seq(980,1035,5))),
@@ -367,7 +374,7 @@ head(pred.x0)
 
 
 
-ggplot(pred.x0, aes(x = pressure)) +
+multnom.pressure <- ggplot(pred.x0, aes(x = pressure)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
@@ -375,4 +382,5 @@ ggplot(pred.x0, aes(x = pressure)) +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
+
 
