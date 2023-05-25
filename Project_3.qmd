@@ -5,21 +5,51 @@ format: beamer
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
-
-## Bullets
-
-When you click the **Render** button a document will be generated that includes:
-
--   Content authored with markdown
--   Output from executable code
-
-## Code
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+## Preparing the data
 
 ```{r}
-1 + 1
+library(ggplot2)
+library(pscl)
+# Necessary for ordinal regression:
+library(MASS)
+weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
+
+g <- 3
+weather$group <- cut(weather$rain, breaks = g)
+weather$eq.group <- cut(weather$rain,
+                        breaks = quantile(weather$rain, probs = seq(0,g)/g),
+                        include.lowest = TRUE)
+weather$monthnr <- as.factor(substr(weather$month, 6, 7))
+```
+
+
+```{r}
+intercept_only <- polr(eq.group ~ 1, data=weather)
+olog.full <- polr(eq.group ~ pressure + location + speed + temp + monthnr, data = weather)
+n <- nrow(weather)
+
+Model.olog.Fw <- step(intercept_only, # start with the minModel instead of nullModel
+                direction = 'forward', # run forward selection
+                scope = list(upper = olog.full, # the maximum to consider is a model with all variables
+                             lower = intercept_only), # the minimum to consider is a model with X10 only
+                trace = 0, k=log(n))
+
+Model.olog.Bw <- step(olog.full, # start with the minModel instead of nullModel
+                direction = 'backward', # run forward selection
+                scope = list(upper = olog.full, # the maximum to consider is a model with all variables
+                             lower = intercept_only), # the minimum to consider is a model with X10 only
+                trace = 0, k=log(n))
+
+bic.olog.Fw <- BIC(Model.olog.Fw)
+aic.olog.Fw <- AIC(Model.olog.Fw)
+mcf2.olog.Fw <- pR2(Model.olog.Fw)['McFadden']
+
+
+bic.olog.Bw <- BIC(Model.olog.Bw)
+aic.olog.Bw <- AIC(Model.olog.Bw)
+mcf2.olog.Bw <- pR2(Model.olog.Bw)['McFadden']
+
+comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw),
+                            AIC = c(aic.olog.Fw, aic.olog.Bw),
+                            McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw))
 ```
