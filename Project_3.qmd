@@ -178,13 +178,16 @@ pred.final <- cbind(weather,
 #sum(conf.matrix)
 
 ##Sensitivity etc####
-(sens <- 100*(diag(conf.matrix)/table(pred.final$eq.group)))
+(sens <- data.frame(100*(diag(conf.matrix)/table(pred.final$eq.group))))
 (prec <- 100*(diag(conf.matrix)/table(pred.final$yhat)))
-(acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
+(acc <- data.frame(100*sum(diag(conf.matrix)/sum(conf.matrix))))
 
-cat("This renders an overall accuracy of: ", acc, "%")
+#cat("This renders an overall accuracy of: ", acc, "%")
 ```
 ```{r}
+kable(conf.matrix,  format = "html")  %>% kable_styling(full_width = F, position = "center")
+colnames(sens) <- c("Class", "Sensitivity %")
+kable(sens,  format = "html")  %>% kable_styling(full_width = F, position = "center")
 kable(conf.matrix,  format = "html")  %>% kable_styling(full_width = F, position = "center")
 ```
 ## Visualization of Quantity of Interest (Pressure, Location)
@@ -215,7 +218,7 @@ ordered.pressure <- ggplot(pred.final, aes(x = pressure)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
-  labs(color = "apply", title = "Precipitation with average wind speed in February") +
+  labs(color = "precipitation", title = "Precipitation with average wind speed in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -231,7 +234,7 @@ ggplot(pred.final, aes(x = pressure)) +
                   fill = "medium precipitation")) +
   geom_ribbon(aes(ymin = `low precipitation` + `medium precipitation`, ymax = 1,
                   fill = "high precipitation")) +
-  labs(fill = "apply", title = "Precipitation with average wind speed in February") +
+  labs(fill = "precipitation", title = "Precipitation with average wind speed in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -264,7 +267,7 @@ ordered.speed <- ggplot(pred.final, aes(x = speed)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
-  labs(color = "apply", title = "Precipitation with average pressure in February") +
+  labs(color = "precipitation", title = "Precipitation with average pressure in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -280,7 +283,7 @@ ggplot(pred.final, aes(x = speed)) +
                   fill = "medium precipitation")) +
   geom_ribbon(aes(ymin = `low precipitation` + `medium precipitation`, ymax = 1,
                   fill = "high precipitation")) +
-  labs(fill = "apply", title = "Precipitation with average pressure in February") +
+  labs(fill = "precipitation", title = "Precipitation with average pressure in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -288,8 +291,8 @@ ggplot(pred.final, aes(x = speed)) +
 ## Multinomial
 
 ```{r}
-weather$eq.group <- relevel(weather$eq.group, ref = "low precipitation")
-
+#weather$eq.group <- relevel(weather$eq.group, ref = "low precipitation")
+weather$eq.group <- as.character(weather$eq.group)
 
 #creating null model
 (model.null <- multinom(eq.group ~ 1, data = weather))
@@ -322,7 +325,7 @@ sum.final <- summary(model.final)
 #odds ratios####
 (OR <- exp(beta))
 
-OR["high precipitation", ]
+OR["low precipitation", ]
 OR["medium precipitation", ]
 
 ## Confidence intervals for OR####
