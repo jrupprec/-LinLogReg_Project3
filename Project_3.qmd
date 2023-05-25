@@ -31,6 +31,8 @@ weather$eq.group[weather$eq.group == "(68.4,292]"] <- "high precipitation"
 weather$eq.group <- as.factor(weather$eq.group)
 
 weather$monthnr <- as.factor(substr(weather$month, 6, 7))
+table(weather$group)
+table(weather$eq.group)
 ```
 
 ## Model selection for the equally sized group
