@@ -1,4 +1,3 @@
-
 ---
 title: "Project 3"
 subtitle: "Ordinal and Multinomial Logistic Regression"
