@@ -282,7 +282,7 @@ ggplot(pred.final, aes(x = speed)) +
 
 ## Multinomial
 ```{r}
-weather$group <- relevel(weather$eq.group, ref = "low precipitation")
+weather$eq.group <- relevel(weather$eq.group, ref = "low precipitation")
 
 
 #creating null model
@@ -301,13 +301,12 @@ model.final <- step(model.null,
                      scope = list(upper = model.full, lower = model.null),
                      direction = "both",
                   k = log(nrow(weather)))
-
+summary(model.final)
 ```
 
 
 ```{r}
 sum.final <- summary(model.final)
-sum.final
 
 #odds
 (beta <- sum.final$coefficients)
@@ -317,13 +316,64 @@ sum.final
 
 #odds ratios####
 (OR <- exp(beta))
-OR
-OR["low precipitation", ]
+
+OR["high precipitation", ]
 OR["medium precipitation", ]
 
 ## Confidence intervals for OR####
 ci <- exp(confint(model.final))
 # a 3-dimensional matrix!
-ci
+
+```
+
+```{r}
+x0 <- data.frame(speed = rep(seq(1,9,0.5),3),
+                 location = c(rep("Lund", length(seq(1,9,0.5))),
+                              rep("Uppsala", length(seq(1,9,0.5))),
+                              rep("Katterjokk", length(seq(1,9,0.5)))),
+                 pressure = rep(mean(weather$pressure), length(seq(1,9,0.5))),
+                 monthnr = rep(weather$monthnr[3], length(seq(1,9,0.5))),
+                 temp= rep(mean(weather$temp), length(seq(1,9,0.5))))
+
+##Predict probabilities####
+pred.x0 <- cbind(
+  x0,
+  predict(model.final, newdata = x0, type = "probs"))
+head(pred.x0)
+
+
+
+ggplot(pred.x0, aes(x = pressure)) +
+  geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
+  geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
+  geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
+  labs(color = "apply", title = "Precipitation with average pressure in February") +
+  facet_wrap(~ location, labeller = "label_both") +
+  theme(text = element_text(size = 14))
+```
+```{r}
+x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
+                 location = c(rep("Lund", length(seq(980,1035,5))),
+                              rep("Uppsala", length(seq(980,1035,5))),
+                              rep("Katterjokk", length(seq(980,1035,5)))),
+                 speed = rep(mean(weather$speed),length(seq(980,1035,5))),
+                 monthnr = rep(weather$monthnr[3], length(seq(980,1035,5))),
+                 temp= rep(mean(weather$temp), length(seq(980,1035,5))))
+                 
+##Predict probabilities####
+pred.x0 <- cbind(
+  x0,
+  predict(model.final, newdata = x0, type = "probs"))
+head(pred.x0)
+
+
+
+ggplot(pred.x0, aes(x = pressure)) +
+  geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
+  geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
+  geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
+  labs(color = "apply", title = "Precipitation with average pressure in February") +
+  facet_wrap(~ location, labeller = "label_both") +
+  theme(text = element_text(size = 14))
 ```
 
