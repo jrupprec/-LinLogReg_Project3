@@ -36,24 +36,24 @@ weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ## Model selection for the equally sized group
 ```{r}
 # here we construct the null and the full model
-intercept_only <- polr(eq.group ~ 1, data=weather)
-olog.full <- polr(eq.group ~ pressure + location + speed + temp + monthnr, data = weather)
+model.null <- polr(eq.group ~ 1, data=weather)
+model.full <- polr(eq.group ~ pressure + location + speed + temp + monthnr, data = weather)
 # n = number of observations
 n <- nrow(weather)
 
-Model.olog.Fw <- step(intercept_only, # start with the minModel instead of nullModel
+Model.olog.Fw <- step(model.null, # start with the minModel instead of nullModel
                 direction = 'forward', # run forward selection
-                scope = list(upper = olog.full, # the maximum to consider is a model with all variables
-                             lower = intercept_only), # the minimum to consider is a model with X10 only
+                scope = list(upper = model.full, # the maximum to consider is a model with all variables
+                             lower = model.null), # the minimum to consider is a model with X10 only
                trace = 0, k=log(n))
 
-Model.olog.Bw <- step(olog.full, # start with the minModel instead of nullModel
+Model.olog.Bw <- step(model.full, # start with the minModel instead of nullModel
                 direction = 'backward', # run forward selection
-                scope = list(upper = olog.full, # the maximum to consider is a model with all variables
-                            lower = intercept_only), # the minimum to consider is a model with X10 only
+                scope = list(upper = model.full, # the maximum to consider is a model with all variables
+                            lower = model.null), # the minimum to consider is a model with X10 only
                 trace = 0, k=log(n))
 
-(model.final <- step(olog.full))
+(model.final <- step(model.full))
 (sum.final <- summary(model.final))
 
 bic.olog.Fw <- BIC(Model.olog.Fw)
@@ -143,7 +143,7 @@ table(pred.final$yhat)
 sum(conf.matrix)
 
 ##Sensitivity etc####
-(sens <- 100*(diag(conf.matrix)/table(pred.final$apply)))
+(sens <- 100*(diag(conf.matrix)/table(pred.final$eq.group)))
 (prec <- 100*(diag(conf.matrix)/table(pred.final$yhat)))
 (acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
 
@@ -178,7 +178,10 @@ ggplot(pred.final, aes(x = pressure)) +
   labs(color = "apply", title = "Which percipitation?") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
+```
 
+## Stacked Visualization
+```{r}
 ##plot stacked probs####
 ggplot(pred.final, aes(x = pressure)) +
   geom_ribbon(aes(ymin = 0, ymax = `low precipitation`, fill = "low precipitation")) +
