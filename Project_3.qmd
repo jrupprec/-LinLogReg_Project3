@@ -80,52 +80,6 @@ kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model 
 ```
 
 
-## Model selection for the equal width categories
-```{r}
-# here we construct the null and the full model
-model.null <- polr(group ~ 1, data=weather)
-model.full <- polr(group ~ pressure + location + speed + temp + monthnr, data = weather)
-# n = number of observations
-n <- nrow(weather)
-
-Model.olog.Fw <- step(model.null, # start with the minModel instead of nullModel
-                direction = 'forward', # run forward selection
-                scope = list(upper = model.full, # the maximum to consider is a model with all variables
-                             lower = model.null), # the minimum to consider is a model with X10 only
-               trace = 0, k=log(n))
-
-Model.olog.Bw <- step(model.full, # start with the minModel instead of nullModel
-                direction = 'backward', # run forward selection
-                scope = list(upper = model.full, # the maximum to consider is a model with all variables
-                            lower = model.null), # the minimum to consider is a model with X10 only
-                trace = 0, k=log(n))
-
-(model.final <- step(model.full))
-(sum.final <- summary(model.final))
-
-bic.olog.Fw <- BIC(Model.olog.Fw)
-aic.olog.Fw <- AIC(Model.olog.Fw)
-mcf2.olog.Fw <- pR2(Model.olog.Fw)['McFadden']
-
-
-bic.olog.Bw <- BIC(Model.olog.Bw)
-aic.olog.Bw <- AIC(Model.olog.Bw)
-mcf2.olog.Bw <- pR2(Model.olog.Bw)['McFadden']
-
-bic.olog.final <- BIC(model.final)
-aic.olog.final <- AIC(model.final)
-mcf2.olog.final <- pR2(model.final)['McFadden']
-
-comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
-                            AIC = c(aic.olog.Fw, aic.olog.Bw, aic.olog.final),
-                            McFadden = c(mcf2.olog.Fw,mcf2.olog.Bw, mcf2.olog.final))
-comparison
-```
-
-
-```{r compbw_eqwidth, results='asis'}
-kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model Selection Process for equally sized groups") %>% kableExtra::kable_styling(full_width = F, position="center", latex_options="HOLD_position")
-```
 
 ```{r}
 #Parameter estimates####
@@ -181,10 +135,10 @@ anova(model.final, model.full)
 #Goodness-of-fit####
 ##Confusion matrix####
 
-pred.final <- cbind(ologit,
+pred.final <- cbind(weather,
                     yhat = predict(model.final))
-(conf.matrix <- table(pred.final$apply, pred.final$yhat))
-table(pred.final$apply)
+(conf.matrix <- table(pred.final$eq.group, pred.final$yhat))
+table(pred.final$eq.group)
 table(pred.final$yhat)
 sum(conf.matrix)
 
