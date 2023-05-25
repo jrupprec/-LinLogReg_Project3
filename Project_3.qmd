@@ -22,9 +22,14 @@ weather$group[weather$group == "(97.5,195]"] <- "medium precipitation"
 weather$group[weather$group == "(195,292]"] <- "high precipitation"
 weather$group <- as.factor(weather$group)
 
-weather$eq.group <- cut(weather$rain,
+weather$eq.group <- as.character(cut(weather$rain,
                         breaks = quantile(weather$rain, probs = seq(0,g)/g),
-                        include.lowest = TRUE)
+                        include.lowest = TRUE))
+weather$eq.group[weather$eq.group == "[0.2,39.7]"] <- "low precipitation"
+weather$eq.group[weather$eq.group == "(39.7,68.4]"] <- "medium precipitation"
+weather$eq.group[weather$eq.group == "(68.4,292]"] <- "high precipitation"
+weather$eq.group <- as.factor(weather$eq.group)
+
 weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ```
 
@@ -150,46 +155,6 @@ predict(model.final, type = "prob")
 predict(model.final)
 predict(model.final, type = "class")
 
-#Predict and ...####
-x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
-                 location = c(rep("Lund", length(seq(980,1035,5))),
-                              rep("Uppsala", length(seq(980,1035,5))),
-                              rep("KatterjÃ¥kk", length(seq(980,1035,5)))))
-                 
-  
-  
-  #gpa = rep(seq(2, 4, 0.1), 2),
-  #               pared = c(rep("no", length(seq(2, 4, 0.1))),
-  #                         rep("yes", length(seq(2, 4, 0.1)))))
-
-model.final <- polr(group ~ pressure + location , data = weather)
-
-pred.final <- cbind(
-  x0,
-  predict(model.final, newdata = x0, type = "prob"),
-  yhat = predict(model.final, newdata = x0))
-
-##plot probs####
-ggplot(pred.final, aes(x = pressure)) +
-  geom_line(aes(y = `low precipitation`, color = "low precipitatio"), linewidth = 2) +
-  geom_line(aes(y = `medium precipitation`, color = "medium precipitatio"), linewidth = 2) +
-  geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
-  labs(color = "apply", title = "Which percipitation?") +
-  facet_wrap(~ location, labeller = "label_both") +
-  theme(text = element_text(size = 14))
-
-##plot stacked probs####
-ggplot(pred.final, aes(x = gpa)) +
-  geom_ribbon(aes(ymin = 0, ymax = unlikely, fill = "1.unlikely")) +
-  geom_ribbon(aes(ymin = unlikely, 
-                  ymax = unlikely + `somewhat likely`, 
-                  fill = "2.somewhat likely")) +
-  geom_ribbon(aes(ymin = unlikely + `somewhat likely`, ymax = 1,
-                  fill = "3.very likely")) +
-  labs(fill = "apply", title = "Graduate school?") +
-  facet_wrap(~ pared, labeller = "label_both") +
-  theme(text = element_text(size = 14))
-
 #AIC, BIC, R2####
 ## deviance####
 model.final$deviance
@@ -228,5 +193,48 @@ sum(conf.matrix)
 (prec <- 100*(diag(conf.matrix)/table(pred.final$yhat)))
 (acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
 
+```
+## Visualization of Quantity of Interest
+
+```{r}
+#Predict and ...####
+x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
+                 location = c(rep("Lund", length(seq(980,1035,5))),
+                              rep("Uppsala", length(seq(980,1035,5))),
+                              rep("KatterjÃ¥kk", length(seq(980,1035,5)))))
+                 
+  
+  
+  #gpa = rep(seq(2, 4, 0.1), 2),
+  #               pared = c(rep("no", length(seq(2, 4, 0.1))),
+  #                         rep("yes", length(seq(2, 4, 0.1)))))
+
+model.final <- polr(eq.group ~ pressure + location , data = weather)
+
+pred.final <- cbind(
+  x0,
+  predict(model.final, newdata = x0, type = "prob"),
+  yhat = predict(model.final, newdata = x0))
+
+##plot probs####
+ggplot(pred.final, aes(x = pressure)) +
+  geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
+  geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
+  geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
+  labs(color = "apply", title = "Which percipitation?") +
+  facet_wrap(~ location, labeller = "label_both") +
+  theme(text = element_text(size = 14))
+
+##plot stacked probs####
+ggplot(pred.final, aes(x = pressure)) +
+  geom_ribbon(aes(ymin = 0, ymax = `low precipitation`, fill = "low precipitation")) +
+  geom_ribbon(aes(ymin = `low precipitation`, 
+                  ymax = `low precipitation` + `medium precipitation`, 
+                  fill = "medium precipitation")) +
+  geom_ribbon(aes(ymin = `low precipitation` + `medium precipitation`, ymax = 1,
+                  fill = "high precipitation")) +
+  labs(fill = "apply", title = "Which percipitation?") +
+  facet_wrap(~ location, labeller = "label_both") +
+  theme(text = element_text(size = 14))
 ```
 
