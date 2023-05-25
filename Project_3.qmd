@@ -16,7 +16,12 @@ library(MASS)
 weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
 
 g <- 3
-weather$group <- cut(weather$rain, breaks = g)
+weather$group <- as.character(cut(weather$rain, breaks = g))
+weather$group[weather$group == "(-0.0918,97.5]"] <- "low precipitation"
+weather$group[weather$group == "(97.5,195]"] <- "medium precipitation"
+weather$group[weather$group == "(195,292]"] <- "high precipitation"
+weather$group <- as.factor(weather$group)
+
 weather$eq.group <- cut(weather$rain,
                         breaks = quantile(weather$rain, probs = seq(0,g)/g),
                         include.lowest = TRUE)
@@ -146,21 +151,31 @@ predict(model.final)
 predict(model.final, type = "class")
 
 #Predict and ...####
-x0 <- data.frame(gpa = rep(seq(2, 4, 0.1), 2),
-                 pared = c(rep("no", length(seq(2, 4, 0.1))),
-                           rep("yes", length(seq(2, 4, 0.1)))))
+x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
+                 location = c(rep("Lund", length(seq(980,1035,5))),
+                              rep("Uppsala", length(seq(980,1035,5))),
+                              rep("KatterjÃ¥kk", length(seq(980,1035,5)))))
+                 
+  
+  
+  #gpa = rep(seq(2, 4, 0.1), 2),
+  #               pared = c(rep("no", length(seq(2, 4, 0.1))),
+  #                         rep("yes", length(seq(2, 4, 0.1)))))
+
+model.final <- polr(group ~ pressure + location , data = weather)
+
 pred.final <- cbind(
   x0,
   predict(model.final, newdata = x0, type = "prob"),
   yhat = predict(model.final, newdata = x0))
 
 ##plot probs####
-ggplot(pred.final, aes(x = gpa)) +
-  geom_line(aes(y = unlikely, color = "1.unlikely"), linewidth = 2) +
-  geom_line(aes(y = `somewhat likely`, color = "2.somewhat likely"), linewidth = 2) +
-  geom_line(aes(y = `very likely`, color = "3.very likely"), linewidth = 2) +
-  labs(color = "apply", title = "Graduate school?") +
-  facet_wrap(~ pared, labeller = "label_both") +
+ggplot(pred.final, aes(x = pressure)) +
+  geom_line(aes(y = `low precipitation`, color = "low precipitatio"), linewidth = 2) +
+  geom_line(aes(y = `medium precipitation`, color = "medium precipitatio"), linewidth = 2) +
+  geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
+  labs(color = "apply", title = "Which percipitation?") +
+  facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 
 ##plot stacked probs####
