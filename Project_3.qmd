@@ -13,7 +13,10 @@ library(pscl)
 library(dplyr)
 # Necessary for ordinal regression:
 library(MASS)
-weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
+weather <- read.csv("/Users/vilgot/Documents/Plugg/linlog/Projects R/LinLogReg_Project1/weather.csv", sep = ",", dec = ".")
+
+#weather[weather$location == "KatterjÃ¥kk",]$location <- "Katterjokk"
+weather[weather$location == "Katterjåkk",]$location <- "Katterjokk"
 
 g <- 3
 weather$group <- as.character(cut(weather$rain, breaks = g))
@@ -154,7 +157,7 @@ sum(conf.matrix)
 x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
                  location = c(rep("Lund", length(seq(980,1035,5))),
                               rep("Uppsala", length(seq(980,1035,5))),
-                              rep("KatterjÃ¥kk", length(seq(980,1035,5)))))
+                              rep("Katterjokk", length(seq(980,1035,5)))))
                  
   
   
