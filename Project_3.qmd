@@ -278,3 +278,28 @@ ggplot(pred.final, aes(x = speed)) +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
+
+## Multinomial
+```{r}
+weather$group <- relevel(weather$eq.group, ref = "low precipitation")
+
+
+#creating null model
+(model.null <- multinom(eq.group ~ 1, data = weather))
+(sum.null <- summary(model.null))
+
+#
+(model.pressure <- multinom(eq.group ~ pressure, data = weather))
+(model.speed <- multinom(eq.group ~ speed, data = weather))
+(sum.math <- summary(model.pressure))
+
+(model.full <- multinom(eq.group ~ pressure + speed + temp + monthnr
+                          , data = weather))
+
+model.final <- step(model.null,
+                     scope = list(upper = model.full, lower = model.null),
+                     direction = "both",
+                  k = log(nrow(weather)))
+
+```
+
