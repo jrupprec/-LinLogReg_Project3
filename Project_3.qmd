@@ -1,6 +1,8 @@
 ---
 title: "Project 3"
+subtitle: "Ordinal and Multinomial Logistic Regression"
 author: "Vilgot Hillbom, Jens Rupprecht"
+date: "26.05.2023"
 format: beamer
 pdf-engine: pdflatex
 editor: visual
@@ -18,6 +20,7 @@ library(pscl)
 library(dplyr)
 # Necessary for ordinal regression:
 library(MASS)
+library(kableExtra)
 #weather <- read.csv("/Users/vilgot/Documents/Plugg/linlog/Projects R/LinLogReg_Project1/weather.csv", sep = ",", dec = ".")
 weather <- read.csv("~/weather.csv", sep = ",", dec = ".")
 
@@ -87,7 +90,7 @@ comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
 
 
 ```{r compbw, results='asis'}
-kableExtra::kable(comparison, format = "latex",  caption = "Comparison of Model Selection Process for equally sized groups") %>% kableExtra::kable_styling(full_width = F, position="center", latex_options="HOLD_position")
+kableExtra::kable(comparison, format = "latex") %>% kableExtra::kable_styling(full_width = F, position="center")
 ```
 
 
@@ -137,28 +140,44 @@ info <- cbind(aic = AIC(model.null, model.final, model.full),
                                 model.null$deviance, 
                               1 - (model.full$deviance + model.full$edf - model.null$edf)/
                                 model.null$deviance))
-round(info, digits = 1)
-
+kable(info)
+```
+## Likelihood Ratio test of null model vs final model
+```{r}
 # LR-test comparing nested models####
-anova(model.null, model.final)
-anova(model.final, model.full)
+kable(anova(model.null, model.final), format = "latex") %>% kable_styling(full_width = F, position = "center")
+```
 
+## Likelihood Ratio test of final vs. full model
+```{r}
+kable(anova(model.final, model.full),  format = "latex")  %>% kable_styling(full_width = F, position = "center")
+```
+
+
+
+## Confusion Matrix
+```{r}
 #Goodness-of-fit####
 ##Confusion matrix####
 
 pred.final <- cbind(weather,
                     yhat = predict(model.final))
 (conf.matrix <- table(pred.final$eq.group, pred.final$yhat))
-table(pred.final$eq.group)
-table(pred.final$yhat)
-sum(conf.matrix)
+#table(pred.final$eq.group)
+#table(pred.final$yhat)
+#sum(conf.matrix)
 
 ##Sensitivity etc####
 (sens <- 100*(diag(conf.matrix)/table(pred.final$eq.group)))
 (prec <- 100*(diag(conf.matrix)/table(pred.final$yhat)))
 (acc <- 100*sum(diag(conf.matrix)/sum(conf.matrix)))
 
+cat("This renders an overall accuracy of: ", acc, "%")
 ```
+
+
+
+
 ## Visualization of Quantity of Interest (Pressure, Location)
 
 ```{r}
