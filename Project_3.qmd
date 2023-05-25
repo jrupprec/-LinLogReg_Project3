@@ -185,7 +185,9 @@ cat("This renders an overall accuracy of: ", acc, "%")
 x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
                  location = c(rep("Lund", length(seq(980,1035,5))),
                               rep("Uppsala", length(seq(980,1035,5))),
-                              rep("Katterjokk", length(seq(980,1035,5)))))
+                              rep("Katterjokk", length(seq(980,1035,5)))),
+                 speed = rep(mean(weather$speed),length(seq(980,1035,5))),
+                 monthnr = rep(weather$monthnr[3], length(seq(980,1035,5))))
                  
   
   
@@ -193,7 +195,6 @@ x0 <- data.frame(pressure = rep(seq(980,1035,5),3),
   #               pared = c(rep("no", length(seq(2, 4, 0.1))),
   #                         rep("yes", length(seq(2, 4, 0.1)))))
 
-model.final <- polr(eq.group ~ pressure + location , data = weather)
 
 pred.final <- cbind(
   x0,
@@ -205,7 +206,7 @@ ggplot(pred.final, aes(x = pressure)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
-  labs(color = "apply", title = "Which percipitation?") +
+  labs(color = "apply", title = "Precipitation with average wind speed in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -220,7 +221,7 @@ ggplot(pred.final, aes(x = pressure)) +
                   fill = "medium precipitation")) +
   geom_ribbon(aes(ymin = `low precipitation` + `medium precipitation`, ymax = 1,
                   fill = "high precipitation")) +
-  labs(fill = "apply", title = "Which percipitation?") +
+  labs(fill = "apply", title = "Precipitation with average wind speed in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -233,7 +234,9 @@ ggplot(pred.final, aes(x = pressure)) +
 x0 <- data.frame(speed = rep(seq(1,9,0.5),3),
                  location = c(rep("Lund", length(seq(1,9,0.5))),
                               rep("Uppsala", length(seq(1,9,0.5))),
-                              rep("Katterjokk", length(seq(1,9,0.5)))))
+                              rep("Katterjokk", length(seq(1,9,0.5)))),
+                 pressure = rep(mean(weather$pressure), length(seq(1,9,0.5))),
+                 monthnr = rep(weather$monthnr[3], length(seq(1,9,0.5))))
                  
   
   
@@ -241,7 +244,6 @@ x0 <- data.frame(speed = rep(seq(1,9,0.5),3),
   #               pared = c(rep("no", length(seq(2, 4, 0.1))),
   #                         rep("yes", length(seq(2, 4, 0.1)))))
 
-model.final <- polr(eq.group ~ speed + location , data = weather)
 
 pred.final <- cbind(
   x0,
@@ -253,7 +255,7 @@ ggplot(pred.final, aes(x = speed)) +
   geom_line(aes(y = `low precipitation`, color = "low precipitation"), linewidth = 2) +
   geom_line(aes(y = `medium precipitation`, color = "medium precipitation"), linewidth = 2) +
   geom_line(aes(y = `high precipitation`, color = "high precipitation"), linewidth = 2) +
-  labs(color = "apply", title = "Which percipitation?") +
+  labs(color = "apply", title = "Precipitation with average pressure in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
@@ -268,7 +270,7 @@ ggplot(pred.final, aes(x = speed)) +
                   fill = "medium precipitation")) +
   geom_ribbon(aes(ymin = `low precipitation` + `medium precipitation`, ymax = 1,
                   fill = "high precipitation")) +
-  labs(fill = "apply", title = "Which percipitation?") +
+  labs(fill = "apply", title = "Precipitation with average pressure in February") +
   facet_wrap(~ location, labeller = "label_both") +
   theme(text = element_text(size = 14))
 ```
