@@ -3,8 +3,7 @@ title: "Project 3"
 subtitle: "Ordinal and Multinomial Logistic Regression"
 author: "Vilgot Hillbom, Jens Rupprecht"
 date: "26.05.2023"
-format: beamer
-pdf-engine: pdflatex
+format: pptx
 editor: visual
 execute:
   echo: false
@@ -89,8 +88,8 @@ comparison <- data.frame(BIC = c(bic.olog.Fw, bic.olog.Bw, bic.olog.final),
 
 
 
-```{r compbw, results='asis'}
-kableExtra::kable(comparison, format = "latex") %>% kableExtra::kable_styling(full_width = F, position="center")
+```{r}
+kable(comparison, format = "latex") %>% kableExtra::kable_styling(full_width = F, position="center")
 ```
 
 
@@ -140,8 +139,13 @@ info <- cbind(aic = AIC(model.null, model.final, model.full),
                                 model.null$deviance, 
                               1 - (model.full$deviance + model.full$edf - model.null$edf)/
                                 model.null$deviance))
-kable(info)
 ```
+
+```{r}
+kable(info, format = "latex") %>% kable_styling(full_width = F, position = "center")
+```
+
+
 ## Likelihood Ratio test of null model vs final model
 ```{r}
 # LR-test comparing nested models####
