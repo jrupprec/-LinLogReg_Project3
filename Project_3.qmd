@@ -46,6 +46,20 @@ weather$eq.group <- as.factor(factor(weather$eq.group, levels=c('low precipitati
 weather$monthnr <- as.factor(substr(weather$month, 6, 7))
 ```
 
+
+```{r}
+group <- data.frame(table(weather$group))
+colnames(group) <- c("Category", "Frequency")
+kable(group, format = "html") %>% kableExtra::kable_styling(full_width = F, position="center")
+```
+
+```{r}
+eq.group <- data.frame(table(weather$eq.group))
+colnames(eq.group) <- c("Category", "Frequency")
+kable(eq.group, format = "html") %>% kableExtra::kable_styling(full_width = F, position="center")
+```
+
+
 ## Model selection for the equally sized group
 
 ```{r}
